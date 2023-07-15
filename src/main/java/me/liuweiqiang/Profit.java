@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -28,6 +29,7 @@ public class Profit {
 
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.getConfig().setAutoWatermarkInterval(1000 * 60 * 30); // onPeriodicEmit周期
         // 用文件模拟事件
         FileSource<String> fileSource = FileSource
                 .forRecordStreamFormat(new TextLineInputFormat(),
@@ -59,7 +61,7 @@ public class Profit {
                     public void onPeriodicEmit(WatermarkOutput output) {}
                 };
             }
-        };
+        }.withIdleness(Duration.ofMinutes(30));
         DataStreamSource<String> source = env
                 .fromSource(fileSource, strategy, "profit");
         // 验证相同source的两个不同实例有不同的时间
